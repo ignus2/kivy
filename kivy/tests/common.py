@@ -15,11 +15,14 @@ import unittest
 import logging
 import os
 from kivy.graphics.cgl import cgl_get_backend_name
+from kivy.input.motionevent import MotionEvent
 log = logging.getLogger('unittest')
 
 _base = object
 if 'mock' != cgl_get_backend_name():
     _base = unittest.TestCase
+
+make_screenshots = os.environ.get('KIVY_UNITTEST_SCREENSHOTS')
 
 
 class GraphicUnitTest(_base):
@@ -43,9 +46,9 @@ class GraphicUnitTest(_base):
         '''
         from os.path import join, dirname, exists
         results_dir = join(dirname(__file__), 'results')
-        if not exists(results_dir):
+        if make_screenshots and not exists(results_dir):
             log.warning('No result directory found, cancel test.')
-            return
+            os.mkdir(results_dir)
         self.test_counter = 0
         self.results_dir = results_dir
         self.test_failed = False
@@ -100,6 +103,11 @@ class GraphicUnitTest(_base):
         if self.framecount > 0:
             return
 
+        # don't create screenshots if not requested manually
+        if not make_screenshots:
+            EventLoop.stop()
+            return
+
         reffn = None
         match = False
         try:
@@ -145,11 +153,11 @@ class GraphicUnitTest(_base):
                 else:
                     log.info('Image discarded')
             else:
-                import pygame
-                s1 = pygame.image.load(tmpfn)
-                s2 = pygame.image.load(reffn)
-                sd1 = pygame.image.tostring(s1, 'RGB')
-                sd2 = pygame.image.tostring(s2, 'RGB')
+                from kivy.core.image import Image as CoreImage
+                s1 = CoreImage(tmpfn, keep_data=True)
+                sd1 = s1.image._data[0].data
+                s2 = CoreImage(reffn, keep_data=True)
+                sd2 = s2.image._data[0].data
                 if sd1 != sd2:
                     log.critical(
                         '%s at render() #%d, images are different.' % (
@@ -276,3 +284,83 @@ class GraphicUnitTest(_base):
         root.mainloop()
 
         return self.retval
+
+    def advance_frames(self, count):
+        '''Render the new frames and:
+
+        * tick the Clock
+        * dispatch input from all registered providers
+        * flush all the canvas operations
+        * redraw Window canvas if necessary
+        '''
+        from kivy.base import EventLoop
+        for i in range(count):
+            EventLoop.idle()
+
+
+class UnitTestTouch(MotionEvent):
+    '''Custom MotionEvent representing a single touch. Similar to `on_touch_*`
+    methods from the Widget class, this one introduces:
+
+    * touch_down
+    * touch_move
+    * touch_up
+
+    Create a new touch with::
+
+        touch = UnitTestTouch(x, y)
+
+    then you press it on the default position with::
+
+        touch.touch_down()
+
+    or move it or even release with these simple calls::
+
+        touch.touch_move(new_x, new_y)
+        touch.touch_up()
+    '''
+
+    def __init__(self, x, y):
+        '''Create a MotionEvent instance with X and Y of the first
+        position a touch is at.
+        '''
+
+        from kivy.base import EventLoop
+        self.eventloop = EventLoop
+        win = EventLoop.window
+
+        super(UnitTestTouch, self).__init__(
+            # device, (tuio) id, args
+            "UnitTestTouch", 99, {
+                "x": x / float(win.width),
+                "y": y / float(win.height),
+            }
+        )
+
+    def touch_down(self, *args):
+        self.eventloop.post_dispatch_input("begin", self)
+
+    def touch_move(self, x, y):
+        win = self.eventloop.window
+        self.move({
+            "x": x / float(win.width),
+            "y": y / float(win.height)
+        })
+        self.eventloop.post_dispatch_input("update", self)
+
+    def touch_up(self, *args):
+        self.eventloop.post_dispatch_input("end", self)
+
+    def depack(self, args):
+        # set MotionEvent to touch
+        self.is_touch = True
+
+        # set sx/sy properties to ratio (e.g. X / win.width)
+        self.sx = args['x']
+        self.sy = args['y']
+
+        # set profile to accept x, y and pos properties
+        self.profile = ['pos']
+
+        # run depack after we set the values
+        super(UnitTestTouch, self).depack(args)

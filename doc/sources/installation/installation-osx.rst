@@ -15,17 +15,16 @@ You can install Kivy with Homebrew and pip using the following steps:
 
     1. Install the requirements using `homebrew <http://brew.sh>`_::
 
-        $ brew install sdl2 sdl2_image sdl2_ttf sdl2_mixer gstreamer
+        $ brew install pkg-config sdl2 sdl2_image sdl2_ttf sdl2_mixer gstreamer
 
-    2. Install cython 0.23 and kivy using pip
-       (make sure to set the env variable USE_OSX_FRAMEWORKS=0, command varies by shell)::
+    2. Install Cython and Kivy using pip::
 
-        $ pip install -I Cython==0.23
-        $ USE_OSX_FRAMEWORKS=0 pip install kivy
+        $ pip install -U Cython
+        $ pip install kivy
 
     - To install the development version, use this in the second step::
 
-        $ USE_OSX_FRAMEWORKS=0 pip install https://github.com/kivy/kivy/archive/master.zip
+        $ pip install https://github.com/kivy/kivy/archive/master.zip
 
 Using MacPorts with pip
 -----------------------
@@ -54,18 +53,21 @@ You can install Kivy with Macports and pip using the following steps:
 
         $ port install libsdl2 libsdl2_image libsdl2_ttf libsdl2_mixer
 
-    5. Install cython 0.23 and kivy using pip
-       (make sure to set the env variable USE_OSX_FRAMEWORKS=0, command varies by shell)::
+    5. Install Cython and Kivy using pip::
 
-        $ pip install -I Cython==0.23
-        $ USE_OSX_FRAMEWORKS=0 pip install kivy
+        $ pip install -U Cython
+        $ pip install kivy
 
     - To install the development version, use this in the second step::
 
-        $ USE_OSX_FRAMEWORKS=0 pip install https://github.com/kivy/kivy/archive/master.zip
+        $ pip install https://github.com/kivy/kivy/archive/master.zip
 
 Using The Kivy.app
 ------------------
+
+.. note::
+    Kivy.app is not available for download at the moment. For details,
+    see `this <https://github.com/kivy/kivy/issues/5211>`_ issue.
 
 .. note::
 
@@ -75,18 +77,14 @@ Using The Kivy.app
     `homebrew <http://brew.sh>`_ to do that.
 
 For OS X 10.7 and later, we provide packages with all dependencies
-bundled in a virtual environment, including a Python interpreter for
+bundled in a virtual environment, including a Python 3 interpreter for
 Kivy3.app. These bundles are primarily used for rapid prototyping,
 and currently serve as containers for packaging Kivy apps with Buildozer.
-Download them from our `Download Page <http://kivy.org/#download>`_.
-They come as .7z files which contain:
-
-    * Kivy.app
 
 To install Kivy, you must:
 
-    1. Download the latest version from http://kivy.org/#download
-       Kivy2.7z is using using Python 2 (System Python), Kivy3.7z (Python 3)
+    1. Navigate to the latest Kivy release at
+       https://kivy.org/downloads/ and download `Kivy-*-osx-python*.7z`.
     2. Extract it using an archive program like `Keka <http://www.kekaosx.com/>`_.
     3. Copy the Kivy2.app or Kivy3.app as Kivy.app to /Applications.
        Paste the following line in the terminal::

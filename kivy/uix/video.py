@@ -17,7 +17,7 @@ the video is loaded (when the texture is created)::
     def on_position_change(instance, value):
         print('The position in the video is', value)
     def on_duration_change(instance, value):
-        print('The duration of the video is', video)
+        print('The duration of the video is', value)
     video = Video(source='PandaSneezes.avi')
     video.bind(position=on_position_change,
                duration=on_duration_change)
@@ -163,8 +163,7 @@ class Video(Image):
     def _do_video_load(self, *largs):
         if CoreVideo is None:
             return
-        if self._video:
-            self._video.stop()
+        self.unload()
         if not self.source:
             self._video = None
             self.texture = None
@@ -235,6 +234,7 @@ class Video(Image):
             self._video.stop()
             self._video.unload()
             self._video = None
+        self.loaded = False
 
 
 if __name__ == '__main__':
